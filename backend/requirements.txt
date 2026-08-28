@@ -1,0 +1,8 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+neo4j==5.24.0
+anthropic==0.34.2
+google-generativeai
+python-dotenv==1.0.1
+pydantic==2.9.2
+Faker==28.4.1

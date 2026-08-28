@@ -1,0 +1,74 @@
+[
+  {
+    "id": "e1",
+    "subject": "API Specs Updated",
+    "body": "Rahul, please review the latest GraphQL API specs I uploaded for Apollo.",
+    "timestamp": "2026-07-05T10:00:00Z",
+    "related_to": "proj1",
+    "sender": "p3",
+    "receivers": ["p1"]
+  },
+  {
+    "id": "e2",
+    "subject": "Dashboard Mockups Ready",
+    "body": "Here are the initial React dashboard mockups for Apollo. Let me know your feedback.",
+    "timestamp": "2026-07-10T14:30:00Z",
+    "related_to": "proj1",
+    "sender": "p2",
+    "receivers": ["p1", "p3"]
+  },
+  {
+    "id": "e3",
+    "subject": "CloudBridge K8s Setup Done",
+    "body": "Vikram, the Kubernetes cluster across AWS and GCP is now live. Ready for workload testing.",
+    "timestamp": "2026-04-20T09:00:00Z",
+    "related_to": "proj3",
+    "sender": "p6",
+    "receivers": ["p5", "p7"]
+  },
+  {
+    "id": "e4",
+    "subject": "Fraud Model Results",
+    "body": "Karthik, the latest fraud scoring model achieved 94.2% precision on the test set. Attaching the report.",
+    "timestamp": "2026-04-05T11:30:00Z",
+    "related_to": "proj4",
+    "sender": "p10",
+    "receivers": ["p8"]
+  },
+  {
+    "id": "e5",
+    "subject": "GPU Vendor Quotes",
+    "body": "Arjun, I received quotes from 3 vendors for A100 GPUs. Let us discuss in tomorrow's standup.",
+    "timestamp": "2026-08-26T16:00:00Z",
+    "related_to": "proj2",
+    "sender": "p3",
+    "receivers": ["p4"]
+  },
+  {
+    "id": "e6",
+    "subject": "Chakra Launch Announcement",
+    "body": "Team, I am happy to announce that Chakra developer portal is now live! Thanks to everyone who contributed.",
+    "timestamp": "2025-12-01T08:00:00Z",
+    "related_to": "proj5",
+    "sender": "p7",
+    "receivers": ["p5", "p6", "p12"]
+  },
+  {
+    "id": "e7",
+    "subject": "Apollo Test Plan",
+    "body": "Rahul and Pawan, please review the test plan I drafted. Targeting 85% code coverage.",
+    "timestamp": "2026-08-29T10:00:00Z",
+    "related_to": "proj1",
+    "sender": "p11",
+    "receivers": ["p1", "p2"]
+  },
+  {
+    "id": "e8",
+    "subject": "PaySecure API Endpoints Shipped",
+    "body": "Karthik, all 3 payment API endpoints are deployed to staging. Ready for integration testing.",
+    "timestamp": "2026-03-28T15:00:00Z",
+    "related_to": "proj4",
+    "sender": "p9",
+    "receivers": ["p8", "p10"]
+  }
+]

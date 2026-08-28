@@ -1,0 +1,17 @@
+[
+  {
+    "id": "c1",
+    "name": "Stark Industries",
+    "industry": "Technology"
+  },
+  {
+    "id": "c2",
+    "name": "Dravid Technologies",
+    "industry": "Cloud Computing"
+  },
+  {
+    "id": "c3",
+    "name": "NexGen Solutions",
+    "industry": "FinTech"
+  }
+]

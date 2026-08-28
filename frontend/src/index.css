@@ -1,0 +1,63 @@
+:root {
+  --ink: #14171d;
+  --paper: #1b1f28;
+  --paper-raised: #232733;
+  --line: #313644;
+  --fog: #8890a1;
+  --text: #edeee3;
+  --amber: #e7a33e;
+  --amber-dim: #e7a33e33;
+  --node-employee: #e7a33e;
+  --node-team: #4fa9a0;
+  --node-department: #8890a1;
+  --node-project: #d66b85;
+  --node-skill: #7c93e8;
+  --node-certification: #b8e78e;
+  --danger: #e0665b;
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.display {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+::selection {
+  background: var(--amber-dim);
+}
+
+/* visible keyboard focus everywhere, per accessibility floor */
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }

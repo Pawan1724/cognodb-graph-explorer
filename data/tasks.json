@@ -1,0 +1,112 @@
+[
+  {
+    "id": "t1",
+    "title": "Design GraphQL API",
+    "description": "Draft the initial schema for Apollo's enterprise search API",
+    "status": "Completed",
+    "priority": "High",
+    "due_date": "2026-07-01",
+    "belongs_to": "proj1",
+    "assigned_to": "p1",
+    "assigned_date": "2026-06-01"
+  },
+  {
+    "id": "t2",
+    "title": "Build React Dashboard",
+    "description": "Create the main UI for Apollo's search interface",
+    "status": "In Progress",
+    "priority": "High",
+    "due_date": "2026-09-15",
+    "belongs_to": "proj1",
+    "assigned_to": "p2",
+    "assigned_date": "2026-06-15"
+  },
+  {
+    "id": "t3",
+    "title": "Train LLM Model",
+    "description": "Fine-tune the Apollo language model on enterprise data",
+    "status": "In Progress",
+    "priority": "Medium",
+    "due_date": "2026-08-30",
+    "belongs_to": "proj1",
+    "assigned_to": "p1",
+    "assigned_date": "2026-08-01"
+  },
+  {
+    "id": "t4",
+    "title": "Procure GPUs",
+    "description": "Get A100 hardware for Titan cluster",
+    "status": "Pending",
+    "priority": "High",
+    "due_date": "2026-09-10",
+    "belongs_to": "proj2",
+    "assigned_to": "p3",
+    "assigned_date": "2026-08-20"
+  },
+  {
+    "id": "t5",
+    "title": "Set up Kubernetes cluster",
+    "description": "Deploy K8s on multi-cloud for CloudBridge",
+    "status": "In Progress",
+    "priority": "High",
+    "due_date": "2026-04-15",
+    "belongs_to": "proj3",
+    "assigned_to": "p6",
+    "assigned_date": "2026-03-10"
+  },
+  {
+    "id": "t6",
+    "title": "Design cloud API gateway",
+    "description": "Architect the API gateway layer for CloudBridge",
+    "status": "Completed",
+    "priority": "High",
+    "due_date": "2026-03-30",
+    "belongs_to": "proj3",
+    "assigned_to": "p5",
+    "assigned_date": "2026-03-05"
+  },
+  {
+    "id": "t7",
+    "title": "Build fraud scoring model",
+    "description": "Train ML model for real-time UPI fraud detection",
+    "status": "In Progress",
+    "priority": "Critical",
+    "due_date": "2026-05-01",
+    "belongs_to": "proj4",
+    "assigned_to": "p10",
+    "assigned_date": "2026-02-20"
+  },
+  {
+    "id": "t8",
+    "title": "Implement payment API",
+    "description": "Build REST APIs for PaySecure transaction processing",
+    "status": "Completed",
+    "priority": "High",
+    "due_date": "2026-04-01",
+    "belongs_to": "proj4",
+    "assigned_to": "p9",
+    "assigned_date": "2026-02-15"
+  },
+  {
+    "id": "t9",
+    "title": "Security audit for Chakra",
+    "description": "Pen-test the developer portal before launch",
+    "status": "Completed",
+    "priority": "High",
+    "due_date": "2025-11-30",
+    "belongs_to": "proj5",
+    "assigned_to": "p12",
+    "assigned_date": "2025-10-15"
+  },
+  {
+    "id": "t10",
+    "title": "Write integration tests for Apollo",
+    "description": "End-to-end test coverage for Apollo search flows",
+    "status": "Pending",
+    "priority": "Medium",
+    "due_date": "2026-09-20",
+    "belongs_to": "proj1",
+    "assigned_to": "p11",
+    "assigned_date": "2026-08-25"
+  }
+]

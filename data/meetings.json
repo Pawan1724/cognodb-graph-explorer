@@ -1,0 +1,58 @@
+[
+  {
+    "id": "m1",
+    "title": "Apollo Kickoff",
+    "date": "2026-06-10",
+    "summary": "Discussed initial architecture and UI plans for Apollo. Rahul presented the LLM strategy, Pawan demoed the React prototype.",
+    "related_to": "proj1",
+    "attendees": ["p1", "p2", "p3"]
+  },
+  {
+    "id": "m2",
+    "title": "Titan GPU Planning",
+    "date": "2026-08-25",
+    "summary": "Discussed A100 GPU procurement timeline and budget for Titan. Priya to coordinate with vendors.",
+    "related_to": "proj2",
+    "attendees": ["p3", "p4"]
+  },
+  {
+    "id": "m3",
+    "title": "CloudBridge Architecture Review",
+    "date": "2026-03-15",
+    "summary": "Sneha presented the multi-cloud strategy. Vikram raised concerns about Kubernetes networking across regions.",
+    "related_to": "proj3",
+    "attendees": ["p5", "p6", "p7"]
+  },
+  {
+    "id": "m4",
+    "title": "PaySecure Sprint Retro",
+    "date": "2026-04-10",
+    "summary": "Reviewed sprint velocity. Diya shipped 3 API endpoints. Rohan's fraud model hit 94% accuracy.",
+    "related_to": "proj4",
+    "attendees": ["p8", "p9", "p10"]
+  },
+  {
+    "id": "m5",
+    "title": "Cross-Company AI Summit",
+    "date": "2026-07-20",
+    "summary": "Leaders from all 3 companies discussed AI strategy alignment. Karthik proposed a shared ML platform.",
+    "related_to": "proj1",
+    "attendees": ["p1", "p5", "p8", "p3"]
+  },
+  {
+    "id": "m6",
+    "title": "Apollo QA Handoff",
+    "date": "2026-08-28",
+    "summary": "Meera joined the Apollo team for QA. Discussed test strategy and coverage targets.",
+    "related_to": "proj1",
+    "attendees": ["p1", "p2", "p11"]
+  },
+  {
+    "id": "m7",
+    "title": "Chakra Security Review",
+    "date": "2025-11-15",
+    "summary": "Aditya presented penetration testing results for Chakra. All critical vulnerabilities patched.",
+    "related_to": "proj5",
+    "attendees": ["p7", "p12", "p5"]
+  }
+]

@@ -1,0 +1,67 @@
+[
+  {
+    "id": "proj1",
+    "name": "Apollo",
+    "description": "Secret AI Initiative — building a next-gen LLM for enterprise search",
+    "status": "In Progress",
+    "start_date": "2026-01-15",
+    "owned_by": "c1",
+    "workers": [
+      { "id": "p1", "role": "Lead" },
+      { "id": "p2", "role": "Developer" },
+      { "id": "p3", "role": "Manager" },
+      { "id": "p11", "role": "QA" }
+    ]
+  },
+  {
+    "id": "proj2",
+    "name": "Titan",
+    "description": "GPU cluster hardware upgrade for AI workloads",
+    "status": "Planning",
+    "start_date": "2026-09-01",
+    "owned_by": "c1",
+    "workers": [
+      { "id": "p3", "role": "Manager" },
+      { "id": "p4", "role": "Scientist" }
+    ]
+  },
+  {
+    "id": "proj3",
+    "name": "CloudBridge",
+    "description": "Multi-cloud orchestration platform for hybrid deployments",
+    "status": "In Progress",
+    "start_date": "2026-03-01",
+    "owned_by": "c2",
+    "workers": [
+      { "id": "p5", "role": "Architect" },
+      { "id": "p6", "role": "DevOps Lead" },
+      { "id": "p7", "role": "Developer" }
+    ]
+  },
+  {
+    "id": "proj4",
+    "name": "PaySecure",
+    "description": "Real-time fraud detection engine for UPI payments",
+    "status": "In Progress",
+    "start_date": "2026-02-10",
+    "owned_by": "c3",
+    "workers": [
+      { "id": "p8", "role": "Technical Lead" },
+      { "id": "p9", "role": "Developer" },
+      { "id": "p10", "role": "ML Engineer" }
+    ]
+  },
+  {
+    "id": "proj5",
+    "name": "Chakra",
+    "description": "Internal developer portal and knowledge management system",
+    "status": "Completed",
+    "start_date": "2025-06-01",
+    "owned_by": "c2",
+    "workers": [
+      { "id": "p7", "role": "Lead Developer" },
+      { "id": "p12", "role": "Security Reviewer" },
+      { "id": "p5", "role": "Architect" }
+    ]
+  }
+]
