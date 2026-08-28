@@ -4,10 +4,10 @@ import AnswerCard from './components/AnswerCard.jsx'
 import './app.css'
 
 const EXAMPLE_QUESTIONS = [
-  'Who does Diya Nair report to, all the way to the top?',
-  'Which employees have the skills for Atlas Migration but aren\u2019t on it yet?',
-  'What is the org-chart distance between two random engineers?',
-  'What skills does the Engineering department need but nobody has?',
+  'What projects is Rahul Sharma working on?',
+  'Which people attended meetings related to the Apollo project?',
+  'Show me the companies that own projects with a status of In Progress.',
+  'Show me everyone connected to the Apollo project through either meetings or tasks.',
 ]
 
 export default function App() {
@@ -81,8 +81,7 @@ export default function App() {
           <div className="empty-state">
             <h1 className="display">Ask your org anything.</h1>
             <p>
-              This graph knows who reports to whom, who has which skills, and who's worked on
-              what. Ask a plain-English question — it gets translated to Cypher and run live.
+              This graph knows who works at which company, who has worked on what project, and the meetings and tasks associated with them. Ask a plain-English question — it gets translated to Cypher and run live.
             </p>
             <div className="chip-row">
               {EXAMPLE_QUESTIONS.map((q) => (
@@ -112,7 +111,7 @@ export default function App() {
         <input
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          placeholder="e.g. Who could staff the Recommendation Engine project?"
+          placeholder="e.g. Which people attended meetings related to the Apollo project?"
           aria-label="Ask a question about the org graph"
         />
         <button type="submit" className="send-btn" disabled={!question.trim()}>
