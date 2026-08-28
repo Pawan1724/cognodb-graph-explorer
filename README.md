@@ -173,9 +173,9 @@ The application handles failures gracefully:
 
 ## Screenshots
 *(Add real screenshots before final submission)*
-- **Main Dashboard**: `docs/screenshots/main-dashboard.png`
-- **Natural Language Query**: `docs/screenshots/nl-query.png`
-- **Graph Visualization (Multi-hop)**: `docs/screenshots/graph-viz.png`
+- **Main Dashboard**
+- **Natural Language Query**
+- **Graph Visualization (Multi-hop)**
 
 ## Testing
 A test suite validates the security layer and API health.
@@ -184,7 +184,7 @@ cd backend
 pytest tests/test_api.py
 ```
 
-## Benchmark / Evaluation
+## Evaluation
 Tested manually on a representative suite of 5 diverse queries.
 - **Execution Accuracy**: 100% (Valid Cypher generated for all test cases).
 - **Latency**: ~5 seconds end-to-end (Including LLM generation + Database execution + Synthesis).
