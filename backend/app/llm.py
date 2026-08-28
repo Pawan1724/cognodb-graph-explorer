@@ -51,7 +51,7 @@ def generate_cypher(question: str) -> dict:
     Convert the following natural language question into a read-only Cypher query.
     IMPORTANT INSTRUCTIONS:
     1. You MUST parameterize the query to prevent injection. Replace any literal values (names, titles, etc.) with parameters (e.g., $person_name).
-    2. ALWAYS RETURN THE FULL NODE ENTITIES AND THEIR RELATIONSHIPS (e.g., `RETURN p, r, proj`). If you do not return the relationship variable, the frontend graph will break!
+    2. ALWAYS RETURN THE RELATIONSHIP VARIABLES along with the nodes. For example, use `MATCH (p:Person)-[r:WORKS_AT]->(c:Company) RETURN p, r, c`. If you omit the relationship variable `r` in the RETURN statement, the frontend graph will draw the nodes as disconnected dots!
     3. You must respond with a raw JSON object containing EXACTLY two keys: "query" (the Cypher string) and "parameters" (a dictionary of the parameters used).
     Do NOT wrap the output in markdown blocks. Output valid JSON only.
     
