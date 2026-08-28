@@ -42,7 +42,9 @@ def ask_question(request: QuestionRequest):
     
     # 1. Translate NL to Cypher
     try:
-        cypher_query = generate_cypher(question)
+        cypher_data = generate_cypher(question)
+        cypher_query = cypher_data["query"]
+        cypher_params = cypher_data.get("parameters", {})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM Error generating Cypher: {str(e)}")
 
@@ -52,7 +54,7 @@ def ask_question(request: QuestionRequest):
     # 3. Execute Cypher
     try:
         with get_session() as session:
-            result = session.run(cypher_query)
+            result = session.run(cypher_query, **cypher_params)
             graph_data = [record.data() for record in result]
             
             # Extract nodes and relationships for graph visualization
@@ -62,6 +64,9 @@ def ask_question(request: QuestionRequest):
             links = [{"source": r.start_node.element_id, "target": r.end_node.element_id, "type": r.type} for r in graph_obj.relationships]
             graph_viz = {"nodes": nodes, "links": links}
     except Exception as e:
+        error_msg = str(e).lower()
+        if "unavailable" in error_msg or "connection" in error_msg or "auth" in error_msg:
+            raise HTTPException(status_code=503, detail="Unable to connect to the graph database. Please check your credentials and ensure the database is running.")
         raise HTTPException(status_code=500, detail=f"Database Error: {str(e)}")
 
     # 4. Generate Answer

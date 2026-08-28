@@ -41,24 +41,34 @@ Sample Projects: Apollo, Titan, CloudBridge, PaySecure, Chakra
 Sample Companies: Stark Industries, Dravid Technologies, NexGen Solutions
 """
 
-def generate_cypher(question: str) -> str:
+import json
+
+def generate_cypher(question: str) -> dict:
     if not client:
-        return "MATCH (n) RETURN n LIMIT 5"  # Dummy fallback
+        return {"query": "MATCH (n) RETURN n LIMIT 5", "parameters": {}}
     prompt = f"""
     {SCHEMA_CONTEXT}
-    Convert the following natural language question into a read-only Cypher query (MATCH, RETURN, WHERE, etc.).
-    IMPORTANT INSTRUCTION: ALWAYS RETURN THE FULL NODE ENTITIES AND THEIR RELATIONSHIPS (e.g., `RETURN p, r, proj` instead of just `RETURN p, proj` or string properties like `RETURN p.name`). If you do not return the relationship variable (like `r`), the frontend graph visualization will draw nodes without any connecting lines!
-    Do not include any explanation or markdown formatting in your output, just the raw Cypher query.
-    Only output the Cypher query, nothing else. No backticks, no code fences.
+    Convert the following natural language question into a read-only Cypher query.
+    IMPORTANT INSTRUCTIONS:
+    1. You MUST parameterize the query to prevent injection. Replace any literal values (names, titles, etc.) with parameters (e.g., $person_name).
+    2. ALWAYS RETURN THE FULL NODE ENTITIES AND THEIR RELATIONSHIPS (e.g., `RETURN p, r, proj`). If you do not return the relationship variable, the frontend graph will break!
+    3. You must respond with a raw JSON object containing EXACTLY two keys: "query" (the Cypher string) and "parameters" (a dictionary of the parameters used).
+    Do NOT wrap the output in markdown blocks. Output valid JSON only.
+    
     Question: {question}
-    Cypher Query:
     """
     response = client.chat.completions.create(
         model="deepseek-chat",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.0
     )
-    return response.choices[0].message.content.strip().replace("```cypher", "").replace("```", "").strip()
+    raw_response = response.choices[0].message.content.strip().replace("```json", "").replace("```", "").strip()
+    try:
+        parsed = json.loads(raw_response)
+        return parsed
+    except json.JSONDecodeError:
+        # Fallback if LLM fails to output valid JSON
+        raise ValueError(f"LLM failed to return valid JSON. Raw output: {raw_response}")
 
 def generate_answer(question: str, graph_data: list) -> str:
     if not client:
