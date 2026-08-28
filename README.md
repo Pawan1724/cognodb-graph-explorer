@@ -4,11 +4,11 @@
 
 ## Live Demo
 
-` Visit : https://graphdatabasewexaai.netlify.app/`
+**Application:** https://graphdatabasewexaai.netlify.app/
 
 ## Demo Video
 
-[drive.google.com/file/d/1wXLPwiV57gu7fo6MiPzEGO4_Qudic9kf/view?usp=sharing](https://drive.google.com/file/d/1wXLPwiV57gu7fo6MiPzEGO4_Qudic9kf/view?usp=sharing)
+[CognoDB Graph Explorer Demo](https://drive.google.com/file/d/1wXLPwiV57gu7fo6MiPzEGO4_Qudic9kf/view?usp=sharing)
 
 ## Problem
 
