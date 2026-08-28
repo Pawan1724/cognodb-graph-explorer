@@ -121,6 +121,16 @@ npm run dev
 **Hosted Application Demo:** [https://graphdatabasewexaai.netlify.app/](https://graphdatabasewexaai.netlify.app/)
 **Screen Recording Demo:** [Demo Video](https://drive.google.com/file/d/1wXLPwiV57gu7fo6MiPzEGO4_Qudic9kf/view?usp=sharing)
 
+## Screenshots
+- **Main Dashboard**
+![1787941466042](image/README/1787941466042.png)
+
+- **Natural Language Query**
+![1787941573425](image/README/1787941573425.png)
+
+- **Graph Visualization (Multi-hop)**
+![1787939791950](image/README/1787939791950.png)
+
 ## Benchmark Methodology
 Performance was measured manually from the time a user submits a natural-language query until the visualization and answer are fully rendered in the frontend. This includes LLM generation latency, backend Cypher validation, CognoDB execution time, and React rendering time. **Note: These are indicative manual measurements.**
 
@@ -131,9 +141,15 @@ We tested five distinct query categories:
 4. **Person → Task → Project**: E.g., What tasks are pending for the Apollo project? (2-hop).
 5. **Multi-path / multi-hop traversal**: E.g., Show me everyone connected to the Apollo project through either meetings or tasks. (Variable length).
 
-Average end-to-end latency across these categories was ~5 seconds.
+- **Latency:** Average end-to-end latency across these categories was ~5 seconds.
+- **Accuracy:** The DeepSeek LLM successfully translated natural language into the correct Cypher syntax across all 5 benchmark categories with 100% schema adherence (0 failed queries due to hallucinations).
 
 ## Security & Error Handling
 - **Application-Level Validation:** The backend uses regex-based Cypher validation to strictly block destructive queries. This allows the application to securely handle user input even if the connected database user isn't strictly restricted via roles.
 - **Connection Error:** Ensure your `.env` contains the correct `COGNODB_URI` and `COGNODB_PASSWORD`.
 - **Cypher Validation Error:** If the LLM generates a mutating query by mistake, the backend's strict validation will block it. Refine the query question to be strictly read-only.
+
+## Future Improvements
+- **Role-Based Access Control (RBAC):** Implement strict database-level read-only roles in CognoDB and backend authentication (e.g., OAuth/JWT) so users only see nodes they are permitted to view.
+- **Query Caching:** Cache frequent natural-language queries mapping to Cypher to reduce LLM latency.
+- **Graph Schema Expansion:** Incorporate temporal nodes (e.g., quarters, sprints) for more complex time-based organizational analytics.
