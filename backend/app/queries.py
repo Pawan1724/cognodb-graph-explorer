@@ -11,78 +11,61 @@ Two things live here:
 
 SCHEMA_DESCRIPTION = """
 Node labels and their properties:
-  (:Employee {id: string, name: string, title: string, seniority: string, hire_date: string})
-  (:Department {name: string})
-  (:Team {name: string})
-  (:Skill {name: string, category: string})
-  (:Project {name: string, status: string, start_date: string, description: string})
-  (:Certification {name: string, issuer: string})
+  (:Person {id: string, name: string, email: string, role: string, department: string})
+  (:Company {id: string, name: string, industry: string})
+  (:Project {id: string, name: string, description: string, status: string, start_date: string})
+  (:Task {id: string, title: string, description: string, status: string, priority: string, due_date: string})
+  (:Meeting {id: string, title: string, date: string, summary: string})
+  (:Email {id: string, subject: string, body: string, timestamp: string})
 
 Relationship types:
-  (:Employee)-[:REPORTS_TO]->(:Employee)                 -- e reports to their manager
-  (:Employee)-[:MEMBER_OF]->(:Team)
-  (:Team)-[:PART_OF]->(:Department)
-  (:Employee)-[:HAS_SKILL {level: string, years: integer}]->(:Skill)   -- level is one of Beginner, Intermediate, Advanced, Expert
-  (:Project)-[:REQUIRES_SKILL {min_level: string}]->(:Skill)
-  (:Employee)-[:WORKED_ON {role: string, start_date: string, end_date: string}]->(:Project)
-  (:Employee)-[:HOLDS_CERT]->(:Certification)
-  (:Employee)-[:MENTORS]->(:Employee)
+  (:Person)-[:WORKS_AT]->(:Company)
+  (:Person)-[:WORKS_ON {role: string}]->(:Project)
+  (:Person)-[:ASSIGNED_TO {assigned_date: string}]->(:Task)
+  (:Person)-[:ATTENDED]->(:Meeting)
+  (:Person)-[:SENT]->(:Email)
+  (:Person)-[:RECEIVED]->(:Email)
+  (:Task)-[:BELONGS_TO]->(:Project)
+  (:Meeting)-[:RELATED_TO]->(:Project)
+  (:Email)-[:RELATED_TO]->(:Project)
+  (:Company)-[:OWNS]->(:Project)
 
 Notes:
-  - REPORTS_TO points from a report up to their manager, so a variable-length
-    path REPORTS_TO*1..5 from an employee walks up the org chart.
-  - Only MATCH / OPTIONAL MATCH / WHERE / RETURN / ORDER BY / LIMIT are
-    permitted. Never generate CREATE, MERGE, DELETE, SET, or REMOVE.
+  - Only MATCH / OPTIONAL MATCH / WHERE / RETURN / ORDER BY / LIMIT are permitted.
+  - Never generate CREATE, MERGE, DELETE, SET, or REMOVE.
 """
 
 SAMPLE_QUERIES = {
     "org_chain": {
-        "label": "Who does this person ultimately report to?",
+        "label": "Which people attended meetings related to the Apollo project?",
         "cypher": """
-            MATCH path = (e:Employee {name: $name})-[:REPORTS_TO*1..6]->(top:Employee)
-            RETURN [n IN nodes(path) | n.name] AS chain
-            ORDER BY length(path) DESC
-            LIMIT 1
+            MATCH (p:Person)-[:ATTENDED]->(m:Meeting)-[:RELATED_TO]->(proj:Project {name: $project_name})
+            RETURN DISTINCT p.name, p.role, m.title
         """,
-        "default_params": {"name": "Aarav Sharma"},
+        "default_params": {"project_name": "Apollo"},
     },
     "project_staffing_candidates": {
-        "label": "Who could staff this project but isn't on it yet?",
+        "label": "What tasks are pending for the Apollo project?",
         "cypher": """
-            MATCH (p:Project {name: $project})-[:REQUIRES_SKILL]->(s:Skill)
-            MATCH (e:Employee)-[hs:HAS_SKILL]->(s)
-            WHERE NOT (e)-[:WORKED_ON]->(p)
-            WITH e, count(DISTINCT s) AS matched_skills
-            MATCH (p2:Project {name: $project})-[:REQUIRES_SKILL]->(allSkills:Skill)
-            WITH e, matched_skills, count(DISTINCT allSkills) AS total_skills
-            WHERE matched_skills = total_skills
-            RETURN e.name AS candidate, e.title AS title, matched_skills
-            ORDER BY candidate
+            MATCH (t:Task {status: 'Pending'})-[:BELONGS_TO]->(proj:Project {name: $project_name})
+            RETURN t.title, t.priority, t.due_date
         """,
-        "default_params": {"project": "Atlas Migration"},
+        "default_params": {"project_name": "Apollo"},
     },
     "shortest_org_path": {
-        "label": "Shortest org-chart connection between two people",
+        "label": "Show me everyone connected to the Apollo project through either meetings or tasks.",
         "cypher": """
-            MATCH (a:Employee {name: $name_a}), (b:Employee {name: $name_b})
-            MATCH path = shortestPath((a)-[:REPORTS_TO*..8]-(b))
-            RETURN [n IN nodes(path) | n.name] AS chain, length(path) AS hops
+            MATCH (p:Person)-[*1..2]-(proj:Project {name: $project_name})
+            RETURN DISTINCT p.name, p.role
         """,
-        "default_params": {"name_a": "Aarav Sharma", "name_b": "Diya Nair"},
+        "default_params": {"project_name": "Apollo"},
     },
     "skill_gap": {
-        "label": "Skills required by active projects that nobody in a department has",
+        "label": "Show me the companies that own projects with a status of In Progress.",
         "cypher": """
-            MATCH (dept:Department {name: $department})<-[:PART_OF]-(:Team)<-[:MEMBER_OF]-(e:Employee)
-            WITH dept, collect(DISTINCT e) AS deptEmployees
-            MATCH (p:Project {status: "Active"})-[:REQUIRES_SKILL]->(s:Skill)
-            WHERE NOT EXISTS {
-                MATCH (any:Employee)-[:HAS_SKILL]->(s)
-                WHERE any IN deptEmployees
-            }
-            RETURN DISTINCT s.name AS missing_skill, p.name AS needed_for_project
-            ORDER BY missing_skill
+            MATCH (c:Company)-[:OWNS]->(proj:Project {status: $project_status})
+            RETURN DISTINCT c.name, proj.name
         """,
-        "default_params": {"department": "Engineering"},
+        "default_params": {"project_status": "In Progress"},
     },
 }

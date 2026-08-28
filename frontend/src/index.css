@@ -7,12 +7,12 @@
   --text: #edeee3;
   --amber: #e7a33e;
   --amber-dim: #e7a33e33;
-  --node-employee: #e7a33e;
-  --node-team: #4fa9a0;
-  --node-department: #8890a1;
-  --node-project: #d66b85;
-  --node-skill: #7c93e8;
-  --node-certification: #b8e78e;
+  --node-person: #e7a33e;
+  --node-company: #4fa9a0;
+  --node-project: #d76e73;
+  --node-task: #8d77cf;
+  --node-meeting: #438bbb;
+  --node-email: #d689b9;
   --danger: #e0665b;
   --radius: 10px;
 }

@@ -3,7 +3,8 @@ from fastapi import HTTPException
 
 # Disallowed cypher keywords (mutating operations)
 BANNED_KEYWORDS = [
-    "CREATE", "DELETE", "DETACH", "DROP", "SET", "REMOVE", "MERGE"
+    "CREATE", "DELETE", "DETACH", "DROP", "SET", "REMOVE", "MERGE",
+    "CALL", "LOAD", "APOC"
 ]
 
 def validate_cypher(query: str):

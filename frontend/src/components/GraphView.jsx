@@ -1,10 +1,10 @@
 const LABEL_COLOR = {
-  Person: 'var(--node-employee)',
-  Company: 'var(--node-team)',
+  Person: 'var(--node-person)',
+  Company: 'var(--node-company)',
   Project: 'var(--node-project)',
-  Task: 'var(--node-department)',
-  Meeting: 'var(--node-skill)',
-  Email: 'var(--node-certification)',
+  Task: 'var(--node-task)',
+  Meeting: 'var(--node-meeting)',
+  Email: 'var(--node-email)',
 }
 
 const NODE_RADIUS = 9

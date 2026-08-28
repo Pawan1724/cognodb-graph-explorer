@@ -1,250 +1,139 @@
-# CognoDB Graph Explorer
+# CognoDB Graph Explorer (WorkGraph AI)
 
-**CognoDB Graph Explorer** is an AI-powered natural-language interface and visual exploration tool for graph databases. Built seamlessly on top of CognoDB (Neo4j) and the DeepSeek AI model, it allows users to instantly translate complex English questions into native Cypher queries, executing them securely and rendering the resulting multi-hop relationships in an interactive, layered graph visualization.
+A graph-powered full-stack application built for exploring an organization's projects, tasks, meetings, emails, and personnel. Users can ask natural language questions about the organization and get answers backed by structured Graph data.
 
-## Live Demo
+This project is a submission for the **WEXA AI — TAKE-HOME ASSIGNMENT: Build a Graph Database Application**.
 
-**Application:** https://graphdatabasewexaai.netlify.app/
-
-## Demo Video
-
-[CognoDB Graph Explorer Demo](https://drive.google.com/file/d/1wXLPwiV57gu7fo6MiPzEGO4_Qudic9kf/view?usp=sharing)
-
-## Problem
-
-Workplace information is fundamentally interconnected: people work on projects, attend meetings, send emails, and complete tasks. However, this data is normally siloed across disparate systems such as HR databases, JIRA, and Outlook. Answering holistic questions about how a company operates is difficult when data is scattered across rigid, tabular schemas.
-
-## Solution
-
-This application unifies these entities into a single workplace knowledge graph. Users can ask natural language questions (e.g., *"Who attended meetings about projects owned by Stark Industries?"*), and the system dynamically translates this intent into a graph query, returning both structured answers and interactive node-link visualizations.
+## The Problem
+Workplace information is fundamentally interconnected: people work on projects, attend meetings, send emails, and complete tasks. However, this data is normally siloed across disparate systems. Answering holistic questions about how a company operates is difficult when data is scattered across rigid, tabular schemas. When we want to answer questions like, "Show me everyone connected to the Apollo project through either meetings or tasks", traditional relational databases struggle.
 
 ## Why a Graph Database?
-
-Graph databases (like CognoDB / Neo4j) excel at answering questions about relationships. Consider the question: *"Which people are indirectly connected to the Apollo project through meetings or tasks?"*
-
-In a relational database, this would require querying multiple tables (`People`, `Meetings`, `Meeting_Attendees`, `Tasks`, `Task_Assignees`, `Projects`) and performing expensive SQL `JOIN`s to stitch the paths together.
-
-In a graph database, relationships are native, first-class citizens. The query simply traverses the connected paths:
-`Person -> ATTENDED -> Meeting -> RELATED_TO -> Project`
-and
-`Person -> ASSIGNED_TO -> Task -> BELONGS_TO -> Project`
-This multi-hop traversal is highly performant and intuitive to express in Cypher.
-
-## Key Features
-
-- Natural language graph querying
-- NL → Cypher translation via LLM
-- Cypher query validation and safety checking
-- CognoDB integration via Bolt protocol
-- Multi-hop relationship traversal
-- Interactive, layered graph visualization
-
-## Architecture
-
-```mermaid
-graph LR
-    User[User / Browser] <-->|HTTP / JSON| FastAPI[FastAPI Backend]
-    FastAPI <-->|Bolt Protocol| CognoDB[(CognoDB / Neo4j)]
-    FastAPI <-->|Prompt / API| LLM[DeepSeek API]
-  
-    subgraph FastAPI Backend
-        Router(API Routes)
-        LLMService(NL to Cypher)
-        Validator(Cypher Validator)
-        DBService(Graph DB Driver)
-      
-        Router --> LLMService
-        LLMService --> Validator
-        Validator --> DBService
-    end
-```
+This use case benefits immensely from a graph database (CognoDB / openCypher) because:
+1. **Relationships are first-class citizens:** The fact that a `Person` `ATTENDED` a `Meeting` is stored directly as a connection, rather than relying on slow, compute-heavy JOIN operations at query time.
+2. **Multi-hop traversal:** Questions like "Which people are indirectly connected to the Apollo project through meetings or tasks?" require traversing multiple disparate paths. In a relational database, this requires complex SQL UNIONs and JOINs. In Cypher, it's natively intuitive.
+3. **Indirect connections:** Finding connected networks natively explores multiple paths simultaneously without rigid schemas.
 
 ## Graph Data Model
+The application models the organization using the following canonical nodes and relationships:
 
-The schema represents typical workplace relationships.
+### Nodes & Properties
+- **Person**: `id`, `name`, `email`, `role`, `department`
+- **Company**: `id`, `name`, `industry`
+- **Project**: `id`, `name`, `description`, `status`, `start_date`
+- **Task**: `id`, `title`, `description`, `status`, `priority`, `due_date`
+- **Meeting**: `id`, `title`, `date`, `summary`
+- **Email**: `id`, `subject`, `body`, `timestamp`
 
+*(Note: Properties listed above are exactly those populated in the seed dataset.)*
+
+### Relationships
+- `(Person)-[:WORKS_AT]->(Company)`
+- `(Person)-[:WORKS_ON {role}]->(Project)`
+- `(Person)-[:ASSIGNED_TO {assigned_date}]->(Task)`
+- `(Person)-[:ATTENDED]->(Meeting)`
+- `(Person)-[:SENT]->(Email)`
+- `(Person)-[:RECEIVED]->(Email)`
+- `(Task)-[:BELONGS_TO]->(Project)`
+- `(Meeting)-[:RELATED_TO]->(Project)`
+- `(Email)-[:RELATED_TO]->(Project)`
+- `(Company)-[:OWNS]->(Project)`
+
+### Data Model Diagram
 ```mermaid
 graph TD
-    Person((Person))
-    Company((Company))
-    Project((Project))
-    Task((Task))
-    Meeting((Meeting))
-    Email((Email))
-
     Person -->|WORKS_AT| Company
     Person -->|WORKS_ON| Project
     Person -->|ASSIGNED_TO| Task
     Person -->|ATTENDED| Meeting
-    Person -->|SENT / RECEIVED| Email
+    Person -->|SENT| Email
+    Person -->|RECEIVED| Email
     Task -->|BELONGS_TO| Project
     Meeting -->|RELATED_TO| Project
     Email -->|RELATED_TO| Project
     Company -->|OWNS| Project
 ```
 
+## Key Features
+- **Natural Language Query Flow:** Users ask questions in plain English. An LLM (DeepSeek) translates the question into a Cypher query using a strict schema context. The Cypher query runs against CognoDB, and the results are presented back to the user with a natural language summary and graph visualization.
+- **Safe Parameterization:** All user inputs generated by the LLM are heavily parameterized to prevent Cypher injection.
+- **Strict Query Safety:** A validation middleware ensures destructive operations (`CREATE`, `DELETE`, `DROP`, `MERGE`, `CALL`, `LOAD`, `APOC`, etc.) are actively blocked before execution.
+
 ## Example Queries
 
-### Multi-hop Query
-
-**Question**: *"Which people are indirectly connected to the Apollo project through meetings or tasks?"*
-
-**Generated Cypher**:
-
+**1. Multi-hop traversal (Meetings):** Which people attended meetings related to the Apollo project?
 ```cypher
-MATCH (p:Person)-[:ATTENDED]->(m:Meeting)-[:RELATED_TO]->(proj:Project {name: "Apollo"})
-RETURN p, m, proj
-UNION
-MATCH (p:Person)-[:ASSIGNED_TO]->(t:Task)-[:BELONGS_TO]->(proj:Project {name: "Apollo"})
-RETURN p, t, proj
+MATCH (p:Person)-[:ATTENDED]->(m:Meeting)-[:RELATED_TO]->(proj:Project {name: $project_name})
+RETURN DISTINCT p.name, p.role, m.title
 ```
 
-*Explanation*: This query uses `UNION` to traverse two distinct multi-hop paths to find all individuals connected to the Apollo project, demonstrating the flexibility of graph traversal over rigid tabular queries.
-
-## Project Structure
-
-```text
-backend/
-  app/
-    main.py         # FastAPI application and routes
-    llm.py          # LLM integration (NL2Cypher)
-    db.py           # Neo4j database driver setup
-    validators.py   # Cypher query security validation
-    queries.py      # Core execution logic
-  tests/            # Test suite
-  ingest.py         # Seed data loader script
-frontend/
-  src/
-    components/     # React UI components (GraphView, etc.)
-    api.js          # Backend communication
-cypher/
-  schema.cypher     # Database constraints
-data/
-  *.json            # Raw seed data
-docs/
-  screenshots/      # UI screenshots
+**2. Graph-specific Collaborative Filtering:** Show me everyone connected to the Apollo project through either meetings or tasks.
+```cypher
+MATCH (p:Person)-[*1..2]-(proj:Project {name: $project_name})
+RETURN DISTINCT p.name, p.role
 ```
 
-## Tech Stack
+## Architecture & Technology Stack
+- **Database:** CognoDB (openCypher over Bolt)
+- **Backend:** Python, FastAPI, Neo4j Official Driver, OpenAI SDK (DeepSeek)
+- **Frontend:** React, Vite
 
-- **Database**: CognoDB (Neo4j compatible)
-- **Backend**: Python, FastAPI, Official Neo4j Python Driver
-- **Frontend**: React, Vite
-- **AI**: DeepSeek API
+## Setup Instructions
 
-## Setup
+### 1. CognoDB Setup
+Create a free CognoDB instance at [CognoDB Cloud](https://cognodb.cloud). Save your connection URI, user (`cognodb`), and password.
 
-*(Follow the steps below to run locally)*
-
-### CognoDB Setup
-
-1. Create a free account at `console.cognodb.com`.
-2. Create a free (c0) instance.
-3. Save your connection URI (`bolt+s://<instance-id>.databases.cognodb.cloud`) and generated password.
-
-### Environment Variables
-
-Ensure `.env` files are created in the project (they are ignored by Git for security).
-See `.env.example` in the repository root for the required variables:
-
-```env
+### 2. Environment Variables
+Create a `.env` file in the root of the repository. (Do not commit this file). Use the following keys:
+```
 COGNODB_URI=bolt+s://<instance-id>.databases.cognodb.cloud
 COGNODB_USER=cognodb
-COGNODB_PASSWORD=your_password
-DEEPSEEK_API_KEY=your_deepseek_key
+COGNODB_PASSWORD=your_cognodb_password
+DEEPSEEK_API_KEY=your_deepseek_api_key
 ```
 
-### Seed Data
-
-Data loading uses parameterized Cypher queries to safely ingest JSON into the graph.
-
+### 3. Seed the Database
+Navigate to the `backend/` directory, install requirements, and run the seed script:
 ```bash
 cd backend
+python -m venv .venv
+# On Windows: .venv\Scripts\activate
+# On Mac/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-python ingest.py
+
+python -m app.seed
 ```
 
-*This creates the initial nodes (People, Projects, etc.) and connects them via relationships.*
-
-### Running Locally
-
-**Backend**:
-
+### 4. Run the Backend
 ```bash
 cd backend
-uvicorn app.main:app --reload
+# With venv activated
+fastapi dev app/main.py
 ```
 
-**Frontend**:
-
+### 5. Run the Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-## Cypher Queries
+## Demo & Usage Example
+**Hosted Application Demo:** [https://graphdatabasewexaai.netlify.app/](https://graphdatabasewexaai.netlify.app/)
+**Screen Recording Demo:** [Demo Video](https://drive.google.com/file/d/1wXLPwiV57gu7fo6MiPzEGO4_Qudic9kf/view?usp=sharing)
 
-The application supports executing dynamic Cypher generated by the LLM. Core query patterns include:
+## Benchmark Methodology
+Performance was measured manually from the time a user submits a natural-language query until the visualization and answer are fully rendered in the frontend. This includes LLM generation latency, backend Cypher validation, CognoDB execution time, and React rendering time. **Note: These are indicative manual measurements.**
 
-- **Direct relationship**: `MATCH (p:Person)-[:WORKS_ON]->(proj:Project) RETURN p, proj`
-- **Multi-hop traversal**: `MATCH (p:Person)-[:ATTENDED]->(m:Meeting)-[:RELATED_TO]->(proj:Project) RETURN p, m, proj`
-- **Relational-awkward discovery**: Traversing multiple disparate paths (Meetings OR Tasks) to discover project contributors without complex SQL unions/joins.
+We tested five distinct query categories:
+1. **Direct relationship**: E.g., What projects is Rahul working on? (`Person → Project`)
+2. **Person → Project**: (Same as above, checking traversal paths).
+3. **Person → Meeting → Project**: E.g., Which people attended meetings related to the Apollo project? (2-hop).
+4. **Person → Task → Project**: E.g., What tasks are pending for the Apollo project? (2-hop).
+5. **Multi-path / multi-hop traversal**: E.g., Show me everyone connected to the Apollo project through either meetings or tasks. (Variable length).
 
-## Security
+Average end-to-end latency across these categories was ~5 seconds.
 
-- **Environment Variables**: No secrets are hardcoded or committed to version control.
-- **Cypher Validation**: A strict regex validator rejects dangerous operations (`CREATE`, `DELETE`, `DROP`, `MERGE`, etc.) before they reach the database.
-- **Read-Only Execution**: It is recommended to use a read-only CognoDB user for runtime queries.
-- **Parameterized Queries**: Where applicable, application logic and ingestion scripts utilize official Neo4j driver parameterization to prevent injection.
-
-## Error Handling
-
-The application handles failures gracefully:
-
-- **Database Unreachable**: Returns a clean "Unable to connect to the graph database" message rather than a 500 stack trace.
-- **No Results**: Displays an empty state ("No matching relationships were found") if the Cypher query returns 0 rows.
-- **Invalid Cypher**: Safely catches Neo4j syntax errors and informs the user.
-
-## Screenshots
-
-*(Add real screenshots before final submission)*
-
-- **Main Dashboard**
-                       ![1787941466042](image/README/1787941466042.png)
-
-- **Natural Language Query**
-                        ![1787941573425](image/README/1787941573425.png)
-
-- **Graph Visualization (Multi-hop)**
-                       ![1787939791950](image/README/1787939791950.png)
-
-## Testing
-
-A test suite validates the security layer and API health.
-
-```bash
-cd backend
-pytest tests/test_api.py
-```
-
-## Benchmark
-
-Tested manually on a representative suite of 5 diverse queries.
-
-- **Execution Accuracy**: 100% (Valid Cypher generated for all test cases).
-- **Latency**: ~5 seconds end-to-end (Including LLM generation + Database execution + Synthesis).
-
-## Limitations
-
-- Highly complex queries may cause LLM hallucinations (generating invalid Cypher properties).
-- The graph visualization is optimized for focused subgraphs; retrieving hundreds of nodes may cause visual clutter.
-
-## Future Improvements
-
-- Implement few-shot prompting or fine-tuning to improve NL2Cypher accuracy.
-- Add user authentication and role-based access control.
-
-## Author
-
-Salikanti Pawan Kumar
+## Security & Error Handling
+- **Application-Level Validation:** The backend uses regex-based Cypher validation to strictly block destructive queries. This allows the application to securely handle user input even if the connected database user isn't strictly restricted via roles.
+- **Connection Error:** Ensure your `.env` contains the correct `COGNODB_URI` and `COGNODB_PASSWORD`.
+- **Cypher Validation Error:** If the LLM generates a mutating query by mistake, the backend's strict validation will block it. Refine the query question to be strictly read-only.

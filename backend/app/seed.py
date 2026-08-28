@@ -1,216 +1,128 @@
-"""
-Populates CognoDB with a realistic, deterministic org/skills/projects graph.
+import os
+import json
+from neo4j import GraphDatabase
+from dotenv import load_dotenv
 
-Run with:  python -m app.seed
-Safe to re-run: it clears prior data from this seed before reloading.
-"""
-import random
+load_dotenv()
 
-from faker import Faker
+URI = os.getenv("COGNODB_URI")
+USER = os.getenv("COGNODB_USER")
+PASSWORD = os.getenv("COGNODB_PASSWORD")
 
-from .db import graph_db
+if not URI or not PASSWORD:
+    raise ValueError("Missing database credentials in .env")
 
-fake = Faker()
-Faker.seed(42)
-random.seed(42)
+driver = GraphDatabase.driver(URI, auth=(USER, PASSWORD))
 
-DEPARTMENTS = ["Engineering", "Product", "Design", "Data"]
-TEAMS = {
-    "Engineering": ["Platform", "Infra", "Mobile"],
-    "Product": ["Growth", "Core Product"],
-    "Design": ["Product Design"],
-    "Data": ["Analytics", "ML"],
-}
-SKILLS = [
-    ("Python", "Language"), ("JavaScript", "Language"), ("Go", "Language"),
-    ("Cypher", "Query Language"), ("SQL", "Query Language"),
-    ("React", "Framework"), ("FastAPI", "Framework"), ("Kubernetes", "Infra"),
-    ("AWS", "Infra"), ("Terraform", "Infra"), ("Figma", "Design Tool"),
-    ("User Research", "Design Skill"), ("A/B Testing", "Product Skill"),
-    ("Data Modeling", "Data Skill"), ("Machine Learning", "Data Skill"),
-    ("System Design", "Engineering Skill"), ("Neo4j", "Query Language"),
-]
-CERTS = [
-    ("AWS Certified Solutions Architect", "AWS"),
-    ("Certified Kubernetes Administrator", "CNCF"),
-    ("PMP", "PMI"),
-]
-PROJECTS = [
-    ("Atlas Migration", "Active", "Migrate the monolith onto Kubernetes.", ["Kubernetes", "Terraform", "Go"]),
-    ("Growth Experiments Q3", "Active", "A/B test onboarding flows.", ["A/B Testing", "React", "SQL"]),
-    ("Insight Dashboard", "Active", "Internal analytics dashboard.", ["Python", "SQL", "Data Modeling"]),
-    ("Recommendation Engine", "Active", "Graph-based recommendation service.", ["Python", "Neo4j", "Cypher", "Machine Learning"]),
-    ("Design System 2.0", "Completed", "Rebuild the shared component library.", ["Figma", "React"]),
-    ("Mobile Revamp", "Active", "Rewrite the mobile app.", ["React", "JavaScript", "System Design"]),
-]
-LEVELS = ["Beginner", "Intermediate", "Advanced", "Expert"]
-SENIORITY = ["Junior", "Mid", "Senior", "Staff", "Principal"]
+DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "data")
 
+def load_json(filename):
+    with open(os.path.join(DATA_DIR, filename), "r") as f:
+        return json.load(f)
 
-def clear_seed_data():
-    graph_db.run_write("MATCH (n) WHERE n.seed_batch = 'orgskill_v1' DETACH DELETE n")
+def ingest_data():
+    with driver.session() as session:
+        # Clear existing data for a fresh start (optional, but good for take-home)
+        print("Clearing existing graph...")
+        session.run("MATCH (n) DETACH DELETE n")
 
+        # 1. Companies
+        companies = load_json("companies.json")
+        for c in companies:
+            session.run("""
+                MERGE (comp:Company {id: $id})
+                SET comp.name = $name, comp.industry = $industry
+            """, **c)
+        print(f"Loaded {len(companies)} companies.")
 
-def build_employees(n=45):
-    employees = []
-    for i in range(n):
-        dept = random.choice(DEPARTMENTS)
-        team = random.choice(TEAMS[dept])
-        employees.append({
-            "id": f"emp_{i:03d}",
-            "name": fake.unique.name(),
-            "title": random.choice(["Engineer", "Senior Engineer", "Manager", "Designer", "Analyst", "Data Scientist"]),
-            "seniority": random.choice(SENIORITY),
-            "hire_date": fake.date_between(start_date="-6y", end_date="-1m").isoformat(),
-            "department": dept,
-            "team": team,
-        })
-    return employees
+        # 2. People and WORKS_AT
+        people = load_json("people.json")
+        for p in people:
+            session.run("""
+                MERGE (person:Person {id: $id})
+                SET person.name = $name, person.email = $email, person.role = $role, person.department = $department
+                WITH person
+                MATCH (comp:Company {id: $works_at})
+                MERGE (person)-[:WORKS_AT]->(comp)
+            """, **p)
+        print(f"Loaded {len(people)} people.")
 
+        # 3. Projects, OWNS, and WORKS_ON
+        projects = load_json("projects.json")
+        for p in projects:
+            session.run("""
+                MERGE (proj:Project {id: $id})
+                SET proj.name = $name, proj.description = $description, proj.status = $status, proj.start_date = $start_date
+                WITH proj
+                MATCH (comp:Company {id: $owned_by})
+                MERGE (comp)-[:OWNS]->(proj)
+            """, **p)
+            for w in p.get("workers", []):
+                session.run("""
+                    MATCH (proj:Project {id: $proj_id})
+                    MATCH (person:Person {id: $person_id})
+                    MERGE (person)-[r:WORKS_ON]->(proj)
+                    SET r.role = $role
+                """, proj_id=p["id"], person_id=w["id"], role=w["role"])
+        print(f"Loaded {len(projects)} projects.")
 
-def seed():
-    print("Clearing previous seed data (if any)...")
-    clear_seed_data()
+        # 4. Tasks, BELONGS_TO, and ASSIGNED_TO
+        tasks = load_json("tasks.json")
+        for t in tasks:
+            session.run("""
+                MERGE (task:Task {id: $id})
+                SET task.title = $title, task.description = $description, task.status = $status, task.priority = $priority, task.due_date = $due_date
+                WITH task
+                MATCH (proj:Project {id: $belongs_to})
+                MERGE (task)-[:BELONGS_TO]->(proj)
+                WITH task
+                MATCH (person:Person {id: $assigned_to})
+                MERGE (person)-[r:ASSIGNED_TO]->(task)
+                SET r.assigned_date = $assigned_date
+            """, **t)
+        print(f"Loaded {len(tasks)} tasks.")
 
-    print("Creating departments and teams...")
-    for dept in DEPARTMENTS:
-        graph_db.run_write(
-            "MERGE (d:Department {name: $name}) SET d.seed_batch = 'orgskill_v1'",
-            {"name": dept},
-        )
-        for team in TEAMS[dept]:
-            graph_db.run_write(
-                """
-                MATCH (d:Department {name: $dept})
-                MERGE (t:Team {name: $team})
-                SET t.seed_batch = 'orgskill_v1'
-                MERGE (t)-[:PART_OF]->(d)
-                """,
-                {"dept": dept, "team": team},
-            )
+        # 5. Meetings, RELATED_TO, and ATTENDED
+        meetings = load_json("meetings.json")
+        for m in meetings:
+            session.run("""
+                MERGE (meeting:Meeting {id: $id})
+                SET meeting.title = $title, meeting.date = $date, meeting.summary = $summary
+                WITH meeting
+                MATCH (proj:Project {id: $related_to})
+                MERGE (meeting)-[:RELATED_TO]->(proj)
+            """, **m)
+            for attendee_id in m.get("attendees", []):
+                session.run("""
+                    MATCH (meeting:Meeting {id: $meeting_id})
+                    MATCH (person:Person {id: $person_id})
+                    MERGE (person)-[:ATTENDED]->(meeting)
+                """, meeting_id=m["id"], person_id=attendee_id)
+        print(f"Loaded {len(meetings)} meetings.")
 
-    print("Creating skills...")
-    for name, category in SKILLS:
-        graph_db.run_write(
-            "MERGE (s:Skill {name: $name}) SET s.category = $category, s.seed_batch = 'orgskill_v1'",
-            {"name": name, "category": category},
-        )
+        # 6. Emails, RELATED_TO, SENT, and RECEIVED
+        emails = load_json("emails.json")
+        for e in emails:
+            session.run("""
+                MERGE (email:Email {id: $id})
+                SET email.subject = $subject, email.body = $body, email.timestamp = $timestamp
+                WITH email
+                MATCH (proj:Project {id: $related_to})
+                MERGE (email)-[:RELATED_TO]->(proj)
+                WITH email
+                MATCH (sender:Person {id: $sender})
+                MERGE (sender)-[:SENT]->(email)
+            """, **e)
+            for receiver_id in e.get("receivers", []):
+                session.run("""
+                    MATCH (email:Email {id: $email_id})
+                    MATCH (receiver:Person {id: $receiver_id})
+                    MERGE (receiver)-[:RECEIVED]->(email)
+                """, email_id=e["id"], receiver_id=receiver_id)
+        print(f"Loaded {len(emails)} emails.")
 
-    print("Creating certifications...")
-    for name, issuer in CERTS:
-        graph_db.run_write(
-            "MERGE (c:Certification {name: $name}) SET c.issuer = $issuer, c.seed_batch = 'orgskill_v1'",
-            {"name": name, "issuer": issuer},
-        )
-
-    print("Creating projects and their required skills...")
-    for name, status, desc, req_skills in PROJECTS:
-        graph_db.run_write(
-            """
-            MERGE (p:Project {name: $name})
-            SET p.status = $status, p.description = $desc, p.start_date = $start, p.seed_batch = 'orgskill_v1'
-            """,
-            {"name": name, "status": status, "desc": desc, "start": fake.date_between(start_date="-1y", end_date="-1m").isoformat()},
-        )
-        for skill in req_skills:
-            graph_db.run_write(
-                """
-                MATCH (p:Project {name: $name}), (s:Skill {name: $skill})
-                MERGE (p)-[r:REQUIRES_SKILL]->(s)
-                SET r.min_level = $level
-                """,
-                {"name": name, "skill": skill, "level": random.choice(LEVELS[1:])},
-            )
-
-    print("Creating employees...")
-    employees = build_employees()
-    for e in employees:
-        graph_db.run_write(
-            """
-            MERGE (emp:Employee {id: $id})
-            SET emp.name = $name, emp.title = $title, emp.seniority = $seniority,
-                emp.hire_date = $hire_date, emp.seed_batch = 'orgskill_v1'
-            WITH emp
-            MATCH (t:Team {name: $team})
-            MERGE (emp)-[:MEMBER_OF]->(t)
-            """,
-            e,
-        )
-
-    print("Building the reporting hierarchy...")
-    # Within each team, the most senior person becomes the manager of the rest.
-    by_team: dict[str, list[dict]] = {}
-    for e in employees:
-        by_team.setdefault(e["team"], []).append(e)
-
-    for team, members in by_team.items():
-        ranked = sorted(members, key=lambda m: SENIORITY.index(m["seniority"]), reverse=True)
-        manager = ranked[0]
-        for report in ranked[1:]:
-            graph_db.run_write(
-                """
-                MATCH (report:Employee {id: $report_id}), (mgr:Employee {id: $mgr_id})
-                MERGE (report)-[:REPORTS_TO]->(mgr)
-                """,
-                {"report_id": report["id"], "mgr_id": manager["id"]},
-            )
-
-    print("Assigning skills to employees...")
-    skill_names = [s[0] for s in SKILLS]
-    for e in employees:
-        for skill in random.sample(skill_names, k=random.randint(2, 5)):
-            graph_db.run_write(
-                """
-                MATCH (emp:Employee {id: $id}), (s:Skill {name: $skill})
-                MERGE (emp)-[r:HAS_SKILL]->(s)
-                SET r.level = $level, r.years = $years
-                """,
-                {
-                    "id": e["id"],
-                    "skill": skill,
-                    "level": random.choice(LEVELS),
-                    "years": random.randint(1, 8),
-                },
-            )
-
-    print("Assigning employees to projects...")
-    project_names = [p[0] for p in PROJECTS]
-    for e in employees:
-        for project in random.sample(project_names, k=random.randint(0, 2)):
-            graph_db.run_write(
-                """
-                MATCH (emp:Employee {id: $id}), (p:Project {name: $project})
-                MERGE (emp)-[r:WORKED_ON]->(p)
-                SET r.role = $role
-                """,
-                {"id": e["id"], "project": project, "role": e["title"]},
-            )
-
-    print("Assigning a few certifications...")
-    cert_names = [c[0] for c in CERTS]
-    for e in random.sample(employees, k=15):
-        graph_db.run_write(
-            """
-            MATCH (emp:Employee {id: $id}), (c:Certification {name: $cert})
-            MERGE (emp)-[:HOLDS_CERT]->(c)
-            """,
-            {"id": e["id"], "cert": random.choice(cert_names)},
-        )
-
-    print("Adding a handful of mentorships...")
-    for e in random.sample(employees, k=10):
-        mentor = random.choice(employees)
-        if mentor["id"] != e["id"]:
-            graph_db.run_write(
-                """
-                MATCH (mentor:Employee {id: $mentor_id}), (mentee:Employee {id: $mentee_id})
-                MERGE (mentor)-[:MENTORS]->(mentee)
-                """,
-                {"mentor_id": mentor["id"], "mentee_id": e["id"]},
-            )
-
-    print(f"Done. Seeded {len(employees)} employees across {len(DEPARTMENTS)} departments.")
-
+    driver.close()
 
 if __name__ == "__main__":
-    seed()
+    ingest_data()
+    print("Ingestion complete!")
